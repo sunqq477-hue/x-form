@@ -1,0 +1,5 @@
+spring:
+  config:
+    name: x-form-app
+  profiles:
+    active: dev
