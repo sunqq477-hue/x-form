@@ -1,0 +1,240 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>x-form 管理工作台</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #17233d;
+      --muted: #75819a;
+      --line: #e8edf5;
+      --blue: #4263eb;
+      --blue-dark: #304ec4;
+      --bg: #f5f7fb;
+      --white: #fff;
+      font-family: Inter, "Segoe UI", "Microsoft YaHei", sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; min-height: 100vh; color: var(--ink); background: var(--bg); }
+    button, input, select, textarea { font: inherit; }
+    button { cursor: pointer; }
+    .app { min-height: 100vh; display: grid; grid-template-columns: 244px minmax(0, 1fr); }
+    .sidebar { background: #17233d; color: #dce5ff; padding: 24px 16px; display: flex; flex-direction: column; }
+    .brand { display: flex; align-items: center; gap: 11px; padding: 0 10px 34px; color: white; font-weight: 750; font-size: 19px; letter-spacing: -.3px; }
+    .brand-mark { width: 34px; height: 34px; border-radius: 11px; background: linear-gradient(135deg, #84a4ff, #536dfe); display: grid; place-items: center; font-size: 17px; }
+    .nav-label { padding: 0 12px 9px; color: #8290b0; font-size: 11px; letter-spacing: 1.2px; text-transform: uppercase; }
+    .nav-item { display: flex; align-items: center; gap: 12px; border-radius: 10px; padding: 11px 12px; margin: 3px 0; color: #aebbd7; font-size: 14px; }
+    .nav-item.active { background: #2a3a60; color: white; }
+    .nav-item[data-nav] { cursor: pointer; }
+    .nav-item[data-nav]:hover { background: #233353; color: white; }
+    .nav-icon { width: 20px; text-align: center; font-size: 16px; }
+    .sidebar-note { margin-top: auto; padding: 14px 12px 2px; color: #8f9dbb; font-size: 12px; line-height: 1.7; }
+    .main { min-width: 0; }
+    .topbar { height: 70px; background: white; border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; align-items: center; padding: 0 34px; }
+    .crumb { color: var(--muted); font-size: 13px; }
+    .account { display: flex; align-items: center; gap: 10px; color: #4f5d78; font-size: 13px; }
+    .avatar { width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; color: #3d56c9; background: #e8edff; font-weight: 700; }
+    .content { max-width: 1440px; margin: 0 auto; padding: 32px 34px 56px; }
+    .heading { display: flex; justify-content: space-between; gap: 20px; align-items: flex-start; margin-bottom: 25px; }
+    h1 { margin: 0; font-size: 26px; letter-spacing: -.6px; }
+    .subtitle { margin: 8px 0 0; color: var(--muted); font-size: 14px; }
+    .button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 40px; border: 0; border-radius: 9px; padding: 0 15px; background: var(--blue); color: white; font-weight: 650; box-shadow: 0 5px 12px #4263eb24; }
+    .button:hover { background: var(--blue-dark); }
+    .button.secondary { background: white; border: 1px solid var(--line); box-shadow: none; color: #34415d; }
+    .button.small { min-height: 32px; padding: 0 10px; font-size: 12px; }
+    .stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin-bottom: 22px; }
+    .stat { background: white; border: 1px solid var(--line); border-radius: 13px; padding: 18px 20px; }
+    .stat-top { color: var(--muted); font-size: 13px; display: flex; justify-content: space-between; }
+    .stat-number { font-size: 27px; font-weight: 750; margin-top: 12px; letter-spacing: -.6px; }
+    .stat-icon { width: 33px; height: 33px; border-radius: 10px; background: #eef1ff; color: var(--blue); display: grid; place-items: center; font-weight: 700; }
+    .panel { background: white; border: 1px solid var(--line); border-radius: 13px; overflow: hidden; }
+    .panel-head { padding: 18px 20px; border-bottom: 1px solid var(--line); display: flex; align-items: center; justify-content: space-between; gap: 14px; }
+    .panel-title { font-size: 15px; font-weight: 700; }
+    .search { width: min(280px, 100%); position: relative; }
+    .search input { width: 100%; border: 1px solid var(--line); border-radius: 8px; padding: 9px 12px 9px 34px; outline: none; color: var(--ink); }
+    .search input:focus, .control:focus { border-color: #8fa3ff; box-shadow: 0 0 0 3px #4263eb14; }
+    .search span { position: absolute; left: 12px; top: 8px; color: #8a96ad; }
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; white-space: nowrap; }
+    th { padding: 12px 18px; text-align: left; color: #8a96ad; background: #fbfcfe; font-size: 11px; text-transform: uppercase; letter-spacing: .6px; font-weight: 650; }
+    td { padding: 15px 18px; border-top: 1px solid #f0f2f7; font-size: 13px; color: #45516b; }
+    .form-name { color: var(--ink); font-weight: 650; }
+    .form-sub { margin-top: 4px; font-size: 11px; color: #97a1b5; }
+    .badge { display: inline-flex; align-items: center; gap: 6px; padding: 5px 9px; border-radius: 20px; background: #eaf8f0; color: #218653; font-size: 11px; font-weight: 650; }
+    .badge::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+    .actions { display: flex; gap: 7px; }
+    .link-button { color: var(--blue); background: none; border: 0; padding: 4px; font-weight: 650; font-size: 12px; }
+    .empty { padding: 42px 16px; text-align: center; color: var(--muted); font-size: 13px; }
+    .notice { min-height: 20px; margin: 0 0 15px; color: #b14242; font-size: 13px; }
+    .modal-backdrop { position: fixed; inset: 0; z-index: 5; display: grid; place-items: center; padding: 20px; background: #121a2c80; }
+    .modal-backdrop[hidden] { display: none; }
+    .modal { width: min(720px, 100%); max-height: min(90vh, 900px); display: flex; flex-direction: column; background: white; border-radius: 16px; box-shadow: 0 24px 70px #0e183640; }
+    .modal.wide { width: min(1020px, 100%); }
+    .modal-head, .modal-foot { padding: 18px 22px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--line); }
+    .modal-foot { border-top: 1px solid var(--line); border-bottom: 0; justify-content: flex-end; gap: 9px; }
+    .modal-head h2 { margin: 0; font-size: 17px; }
+    .close { border: 0; background: none; font-size: 22px; color: #76829a; }
+    .modal-body { overflow: auto; padding: 22px; }
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .form-grid .full { grid-column: 1 / -1; }
+    .label { display: block; color: #59657d; font-size: 12px; font-weight: 650; margin-bottom: 7px; }
+    .control { width: 100%; border: 1px solid #dfe5ef; border-radius: 8px; padding: 10px 11px; outline: none; color: var(--ink); background: white; }
+    textarea.control { resize: vertical; min-height: 76px; }
+    .fields-title { margin: 24px 0 10px; display: flex; align-items: center; justify-content: space-between; font-weight: 700; font-size: 14px; }
+    .field-list { display: grid; gap: 10px; }
+    .field-row { border: 1px solid var(--line); border-radius: 10px; padding: 13px; background: #fcfdff; }
+    .field-controls { display: grid; grid-template-columns: 1.2fr 1fr 1.3fr auto; gap: 9px; align-items: end; }
+    .field-controls .label { font-size: 11px; }
+    .field-controls .control { padding: 8px; font-size: 12px; }
+    .field-extra { margin-top: 10px; display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: end; }
+    .required-toggle { display: flex; align-items: center; gap: 7px; height: 35px; color: #606c83; font-size: 12px; }
+    .remove-field { border: 0; background: #fff0f0; color: #bd5151; border-radius: 7px; padding: 8px 10px; font-size: 12px; }
+    .toast { position: fixed; z-index: 10; bottom: 24px; left: 50%; transform: translateX(-50%); padding: 11px 16px; border-radius: 9px; color: white; background: #17233d; box-shadow: 0 9px 24px #17233d35; font-size: 13px; }
+    .toast[hidden] { display: none; }
+    .filter-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+    .filter-bar .control { width: auto; min-width: 140px; padding: 9px 10px; font-size: 13px; }
+    .pagination { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 13px 18px; border-top: 1px solid var(--line); color: var(--muted); font-size: 12px; }
+    .page-actions { display: flex; align-items: center; gap: 8px; }
+    .login-screen { position: fixed; inset: 0; z-index: 20; display: grid; place-items: center; padding: 20px; background: linear-gradient(135deg, #17233d, #293b68); }
+    .login-screen[hidden] { display: none; }
+    .login-card { width: min(420px, 100%); padding: 32px; border-radius: 17px; background: white; box-shadow: 0 24px 80px #08112655; }
+    .login-brand { display: flex; align-items: center; gap: 10px; margin-bottom: 24px; font-weight: 750; font-size: 19px; }
+    .login-card h1 { font-size: 23px; }
+    .login-hint { margin: 8px 0 22px; color: var(--muted); font-size: 13px; line-height: 1.7; }
+    .login-card label { display: block; margin: 14px 0; }
+    .login-card .button { width: 100%; margin-top: 8px; }
+    .demo-warning { margin-top: 16px; padding: 10px 12px; border-radius: 8px; background: #fff8e8; color: #80621e; font-size: 11px; line-height: 1.6; }
+    .account { gap: 9px; }
+    .logout { padding: 6px 9px; border: 1px solid var(--line); border-radius: 7px; color: #52607a; background: white; font-size: 12px; }
+    .error-inline { min-height: 19px; margin: 10px 0 0; color: #b14242; font-size: 12px; line-height: 1.6; }
+    .submission-tools { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 12px; }
+    .submission-tools .control { max-width: 340px; }
+    .badge.inactive { background: #f0f2f6; color: #707b90; }
+    @media (max-width: 860px) {
+      .app { grid-template-columns: 70px minmax(0, 1fr); }
+      .sidebar { padding: 18px 9px; align-items: center; }
+      .brand { padding: 0 0 28px; }
+      .brand-name, .nav-label, .nav-text, .sidebar-note { display: none; }
+      .nav-item { justify-content: center; width: 48px; padding: 12px 0; }
+      .topbar { padding: 0 20px; }
+      .content { padding: 25px 18px 42px; }
+    }
+    @media (max-width: 620px) {
+      .heading { flex-direction: column; }
+      .stats { grid-template-columns: 1fr; gap: 10px; }
+      .stat { padding: 15px 17px; }
+      .stat-number { margin-top: 5px; }
+      .panel-head { align-items: flex-start; flex-direction: column; }
+      .search { width: 100%; }
+      .filter-bar { width: 100%; }
+      .filter-bar .control { flex: 1; min-width: 0; }
+      .form-grid { grid-template-columns: 1fr; }
+      .form-grid .full { grid-column: auto; }
+      .field-controls { grid-template-columns: 1fr 1fr; }
+      .field-controls > :first-child { grid-column: 1 / -1; }
+      .account .account-name { display: none; }
+      .pagination { align-items: flex-start; flex-direction: column; }
+      .submission-tools { align-items: stretch; flex-direction: column; }
+      .login-card { padding: 26px 22px; }
+    }
+  </style>
+</head>
+<body>
+  <section class="login-screen" id="login-screen" aria-labelledby="login-title">
+    <form class="login-card" id="login-form">
+      <div class="login-brand"><span class="brand-mark">x</span><span>x-form 管理工作台</span></div>
+      <h1 id="login-title">运营人员登录</h1>
+      <p class="login-hint">登录后可创建表单、复制填写链接，并查询用户提交记录。</p>
+      <label><span class="label">用户名</span><input class="control" id="login-username" autocomplete="username" value="demo" required></label>
+      <label><span class="label">密码</span><input class="control" id="login-password" type="password" autocomplete="current-password" placeholder="请输入演示密码" required></label>
+      <p class="error-inline" id="login-error" role="alert"></p>
+      <button class="button" type="submit">登录工作台</button>
+      <div class="demo-warning">演示账号：demo　演示密码：demo123<br>这是前端模拟登录，不会验证服务器身份，也不能保护 API。</div>
+    </form>
+  </section>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand"><span class="brand-mark">x</span><span class="brand-name">x-form</span></div>
+      <div class="nav-label">工作台</div>
+      <div class="nav-item active"><span class="nav-icon">▦</span><span class="nav-text">表单管理</span></div>
+      <div class="nav-item" data-nav="submissions"><span class="nav-icon">▤</span><span class="nav-text">填写数据</span></div>
+      <div class="sidebar-note">表单管理工作台<br>本机开发环境</div>
+    </aside>
+    <main class="main">
+      <header class="topbar">
+        <div class="crumb">工作台　/　表单管理</div>
+        <div class="account"><span class="avatar" id="account-avatar">管</span><span class="account-name" id="account-name">demo</span><button class="logout" id="logout-button" type="button">退出</button></div>
+      </header>
+      <div class="content">
+        <section class="heading">
+          <div>
+            <h1>表单管理</h1>
+            <p class="subtitle">创建表单、分享链接，并查看用户提交的数据。</p>
+          </div>
+          <button class="button" id="open-create"><span>＋</span> 新建表单</button>
+        </section>
+        <div class="notice" id="notice" role="status"></div>
+        <section class="stats">
+          <div class="stat"><div class="stat-top"><span>表单总数</span><span class="stat-icon">▦</span></div><div class="stat-number" id="stat-forms">—</div></div>
+          <div class="stat"><div class="stat-top"><span>已发布</span><span class="stat-icon">↗</span></div><div class="stat-number" id="stat-published">—</div></div>
+          <div class="stat"><div class="stat-top"><span>累计提交</span><span class="stat-icon">✓</span></div><div class="stat-number" id="stat-submissions">—</div></div>
+        </section>
+        <section class="panel">
+          <div class="panel-head">
+            <div class="panel-title">全部表单 <span id="form-count" style="color:#8a96ad;font-weight:500"></span></div>
+            <div class="filter-bar">
+              <label class="search"><span>⌕</span><input id="search" type="search" placeholder="搜索名称或分享码"></label>
+              <select class="control" id="status-filter" aria-label="按状态筛选"><option value="all">全部状态</option><option value="PUBLISHED">已发布</option><option value="DRAFT">草稿</option><option value="DISABLED">已停用</option></select>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>表单</th><th>状态</th><th>填写次数</th><th>创建时间</th><th>操作</th></tr></thead>
+              <tbody id="form-rows"></tbody>
+            </table>
+            <div class="empty" id="empty-state" hidden>还没有表单。点击“新建表单”开始创建。</div>
+          </div>
+          <div class="pagination"><span id="page-summary">显示 0 条</span><div class="page-actions"><button class="button secondary small" id="previous-page" type="button">上一页</button><span id="page-number">1 / 1</span><button class="button secondary small" id="next-page" type="button">下一页</button></div></div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <div class="modal-backdrop" id="editor-modal" hidden>
+    <section class="modal" role="dialog" aria-modal="true" aria-labelledby="editor-title">
+      <div class="modal-head"><h2 id="editor-title">新建表单</h2><button class="close" data-close="editor-modal" aria-label="关闭">×</button></div>
+      <div class="modal-body">
+        <p class="error-inline" id="editor-notice" role="status"></p>
+        <div class="form-grid">
+          <label><span class="label">表单名称</span><input class="control" id="form-title" maxlength="120" placeholder="例如：用户需求收集"></label>
+          <label><span class="label">表单说明</span><input class="control" id="form-description" maxlength="1000" placeholder="简要说明填写用途"></label>
+        </div>
+        <div class="fields-title"><span>表单字段</span><button class="button secondary small" id="add-field">＋ 添加字段</button></div>
+        <div class="field-list" id="field-list"></div>
+      </div>
+      <div class="modal-foot"><button class="button secondary" data-close="editor-modal">取消</button><button class="button" id="save-form">创建并发布</button></div>
+    </section>
+  </div>
+
+  <div class="modal-backdrop" id="submissions-modal" hidden>
+    <section class="modal wide" role="dialog" aria-modal="true" aria-labelledby="submissions-title">
+      <div class="modal-head"><h2 id="submissions-title">填写数据</h2><button class="close" data-close="submissions-modal" aria-label="关闭">×</button></div>
+      <div class="modal-body">
+        <div class="notice" id="submission-notice"></div>
+        <div class="submission-tools"><input class="control" id="submission-search" type="search" placeholder="搜索提交内容"><button class="button secondary small" id="export-submissions" type="button">导出 CSV</button></div>
+        <div class="table-wrap">
+          <table><thead id="submission-head"></thead><tbody id="submission-rows"></tbody></table>
+          <div class="empty" id="submission-empty" hidden>这个表单还没有收到填写数据。</div>
+        </div>
+      </div>
+      <div class="modal-foot"><button class="button secondary" data-close="submissions-modal">关闭</button></div>
+    </section>
+  </div>
+  <div class="toast" id="toast" hidden></div>
+
+  <script src="../assets/api.js"></script>
+  <script src="../assets/admin.js"></script>
+</body>
+</html>
